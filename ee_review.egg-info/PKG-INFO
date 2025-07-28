@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: ee-review
+Version: 0.1.0
+Summary: Full-stack web app with FastAPI and Vue
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi
+Requires-Dist: uvicorn
+Requires-Dist: sqlalchemy
+Requires-Dist: pydantic
+Requires-Dist: passlib[bcrypt]
+Requires-Dist: python-jose[cryptography]

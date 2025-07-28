@@ -1,0 +1,25 @@
+# files
+*.db
+*.pyc
+*.pyo
+*.pyd
+
+# directories
+__pycache__/
+# virtual environments
+venv/
+.env/
+
+# IDEs
+.idea/
+# logs
+*.log
+# coverage
+.coverage
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+# Python egg files
+*.egg
+# distribution files
+dist/
+build/

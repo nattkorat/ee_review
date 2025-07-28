@@ -1,0 +1,2 @@
+[console_scripts]
+ee_review = backend.cli:main

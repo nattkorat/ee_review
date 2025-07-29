@@ -16,8 +16,14 @@ An **event** is defined as a specific incident or occurrence described in the te
 ### 1.2 Event Type
 
 - Each trigger corresponds to an **event type**, representing the category of the event.
-- Examples of event types in epidemic domains include:
-  - `Outbreak`, `CaseReport`, `DeathReport`, `Vaccination`, `Prevention`, `TravelAlert`, `Quarantine`
+- The event types in epidemic domains include derived from [SPEED++](https://arxiv.org/abs/2110.03101):
+  - `Infect` An event describing one or more individuals getting infected
+  - `Spread` An event describing the transmission or spread of the disease
+  - `Symptom` An event describing the symptoms of the disease
+  - `Prevent` An event describing preventive measures
+  - `Control` An event describing measures to control the outbreak
+  - `Cure` An event describing treatment or recovery from the disease
+  - `Death` An event describing death(s) from the disease
 
 ### 1.3 Event Arguments
 
@@ -25,22 +31,80 @@ An **event** is defined as a specific incident or occurrence described in the te
   - **What** happened?
   - **Where**, **when**, **to whom**, or **how many**?
 - Each argument is linked to a **role**, such as:
-  - `Disease`, `Location`, `Date`, `Agent` (e.g., virus), `VictimCount`, `Organization`, etc.
+  - `Infect`:
+    - `infected`: The person or group being infected (e.g., "a 45-year-old man", "15 factory workers").
+    - `disease`: The name of the disease.
+    - `place`: The location where the infection occurred.
+    - `time`: The date or time of the infection.
+    - `value`: The number of new infection cases.
+    - `information-source`: The source of this information (e.g., "Ministry of Health", "local news").
+  - `Spread`:
+    - `population`: The population affected by the spread.
+    - `disease`: The name of the disease.
+    - `place`: The location where the disease is spreading.
+    - `time`: The time period of the spread.
+    - `value`: The total number of cases related to the spread.
+    - `information-source`: The source of this information.
+    - `trend`: The trend of the spread (e.g., "increasing", "slowing down", "stabilizing").
+  - `Symptom`:
+    - `person`: The person or group exhibiting symptoms.
+    - `symptom`: The specific symptom(s) described (e.g., "fever", "cough").
+    - `disease`: The name of the disease causing the symptoms.
+    - `place`: The location where this is observed.
+    - `time`: When the symptoms were observed.
+    - `duration`: How long the symptoms last.
+    - `information-source`: The source of the symptom information.
+  - `Prevent`:
+    - `agent`: The entity taking preventive action (e.g., "government", "citizens").
+    - `disease`: The disease being prevented.
+    - `means`: The specific preventive measure (e.g., "vaccination campaign", "mask mandate").
+    - `information-source`: The source of this information.
+    - `target`: The intended target group for the prevention.
+    - `effectiveness`: The stated effectiveness of the measure.
+  - `Control`:
+    - `authority`: The authority implementing the control measure (e.g., "CDC", "City Council").
+    - `disease`: The disease being controlled.
+    - means: The specific control measure (e.g., "lockdown", "travel restrictions").
+    - `place`: The location where the measure is implemented.
+    - `time`: When the measure is in effect.
+    - `information-source`: The source of this information.
+    - `subject`: The people or entities affected by the control measure.
+    - `effectiveness`: The stated effectiveness of the measure.
+  - `Cure`:
+    - `cured`: The person or group that has been cured or recovered.
+    - `disease`: The disease they recovered from.
+    - `means`: The treatment or method used for the cure (e.g., "antiviral medication").
+    - `place`: The location of the recovery/treatment.
+    - `time`: When the recovery happened.
+    - `value`: The number of people cured.
+    - `facility`: The hospital or facility where the cure took place.
+    - `information-source`: The source of this information.
+    - `effectiveness`: The stated effectiveness of the treatment.
+    - `duration`: The duration of the treatment or recovery period.
+  - `Death`:
+    - `dead`: The person or group that has died.
+    - `disease`: The disease that caused the death.
+    - `place`: The location of the death.
+    - `time`: The date or time of death.
+    - `value`: The number of deaths.
+    - `information-source`: The source of this information.
+    - `trend`: The trend of deaths (e.g., "rising", "declining").
+  
 
 #### Example:
 
 > **Text**:  
-> "In June, the CDC reported 120 cases of cholera in the northern provinces."
+> "In June, the CDC reported 120 cases were infected cholera in the northern provinces."
 
 | Component     | Value                |
 |---------------|----------------------|
-| Trigger       | reported             |
-| Event Type    | CaseReport           |
-| Arguments     | - Date: June  
-|               | - Organization: CDC  
-|               | - VictimCount: 120 cases  
+| Trigger       | infected             |
+| Event Type    | Infect           |
+| Arguments     | - Time: June  
+|               | - Information-source: CDC  
+|               | - Value: 120 cases  
 |               | - Disease: cholera  
-|               | - Location: northern provinces  |
+|               | - Place: northern provinces  |
 
 By extracting this structured information, we can build knowledge graphs, perform epidemic trend analysis, and improve early warning systems.
 
@@ -86,11 +150,9 @@ Annotators are expected to:
 
 ### 4.2 Event Type Classification
 
-- Choose the correct **event type** from a predefined list:
+- Choose the correct **event type** from a mentioned predefined list:
 
-    This will be explained more next time.
-
-  - `Outbreak`, `CaseReport`, `DeathReport`, `Vaccination`, `Prevention`, `TravelAlert`, etc.
+  - `Infect`, `Spread`, `Symptom`, `Control`, `Prevent`, `Cure`, and `Death`.
 - **Edit** if the type does not match the context.
 
 ---
@@ -104,15 +166,6 @@ For each event, check the **arguments**:
 - **Add**: If a relevant argument is missing.
 - **Remove**: If hallucinated or irrelevant.
 
-Common **argument roles**:
-- `Disease`
-- `Location`
-- `Date`
-- `VictimCount`
-- `Agent` (virus/bacteria)
-- `Organization`
-- `Treatment`
-
 ---
 
 ### 4.4 Irrelevant Events
@@ -125,7 +178,7 @@ Common **argument roles**:
 
 | Action       | Description                                            |
 |--------------|--------------------------------------------------------|
-| Approve    | Confirm trigger, type, and arguments are all correct   |
+| Submit    | Confirm trigger, type, and arguments are all correct   |
 | Edit       | Fix incorrect spans, types, or argument roles         |
 | Add        | Add missing event triggers, arguments, or roles       |
 | Remove     | Delete hallucinated or unrelated items                |
@@ -147,7 +200,7 @@ To ensure a **reliable final annotation**:
 
 ## 6. Metrics for Post-Evaluation
 
-You may later compute:
+After all targeted articles are reviewed, we can compute:
 
 - **Precision / Recall / F1** for:
   - Trigger identification
@@ -158,7 +211,7 @@ You may later compute:
   - Cohen’s / Fleiss’ Kappa for categorical decisions
   - Span overlap for token-based matching
 
-- **Correction Stats**:
+- **Correction Stats** (Challenging):
   - % of items added / removed / edited
   - Most frequent error types
 
@@ -171,22 +224,5 @@ You may later compute:
 - When marking spans, be **precise** — no extra punctuation or unnecessary tokens.
 - If unsure, leave a **comment** for clarification.
 - Events and arguments must be **explicitly stated** in the text (not inferred).
-
----
-
-## 8. Example
-
-> **Text**:  
-> "On Monday, Cambodia reported 125 new cases of dengue fever in Phnom Penh."
-
-**LLM Output**:
-- Trigger: `reported` ✅  
-- Event Type: `CaseReport` ✅  
-- Arguments:
-  - Date: `Monday` ✅  
-  - Disease: `dengue fever` ✅  
-  - Location: `Phnom Penh` ✅
-
-✅ This is correct — approve and move on.
 
 ---

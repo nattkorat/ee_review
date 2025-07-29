@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from backend.proj import schemas, crud, models
 from backend.database import SessionLocal
@@ -30,20 +30,23 @@ def get_project(project_id: int, db: Session = Depends(get_db), current_user: Us
         raise HTTPException(status_code=404, detail="Project not found")
     return project
 
-
-@router.get("/{project_id}/tasks", response_model=list[schemas.TaskOut])
-def get_tasks(project_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    tasks = crud.get_tasks(db, project_id=project_id, skip=skip, limit=limit)
-    return tasks
-
-@router.post("/{project_id}/tasks", response_model=schemas.TaskOut, status_code=status.HTTP_201_CREATED)
-def create_task(project_id: int, task: schemas.CreateTask, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    task.project_id = project_id
-    return crud.create_task(db, task)
+@router.get("/{project_id}/tasks", response_model=schemas.TaskListOut)
+def get_tasks(
+    project_id: int,
+    skip: int = 0,
+    limit: int = 100,
+    status: bool | None = Query(None),  # Optional filter
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    tasks, total = crud.get_tasks_with_total(
+        db, project_id=project_id, skip=skip, limit=limit, status=status
+    )
+    return {"tasks": tasks, "total": total}
 
 @router.get("/{project_id}/tasks/{task_id}", response_model=schemas.TaskOut)
-def get_task(project_id: int, task_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    task = crud.get_task(db, project_id=project_id, task_id=task_id)
+def get_task(project_id: int, task_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    task = crud.get_task(db, task_id=task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
     return task

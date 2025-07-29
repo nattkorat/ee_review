@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+from typing import List, Optional
+import json
 
 class CreateProject(BaseModel):
     name: str
@@ -17,16 +19,6 @@ class CreateTask(BaseModel):
     project_id: int
     article: str
     events: str | None = None # JSON string to store events
-    
-class TaskOut(BaseModel):
-    id: str
-    project_id: int
-    article: str
-    events: str | None = None
-    status: bool = False  # True for completed, False for pending
-
-    class Config:
-        from_attributes = True
 
 class CreateReview(BaseModel):
     task_id: str
@@ -64,9 +56,23 @@ class TaskOut(BaseModel):
     id: str
     project_id: int
     article: str
-    events: str | None = None  # JSON string to store events
+    events: list | None = None  # JSON string to store events
     status: bool = False  # True for completed, False for pending
+    
+    @field_validator("events", mode="before")
+    @classmethod
+    def validate_events(cls, v):
+        if isinstance(v, str):
+            try:
+                return json.loads(v)  # Convert JSON string to dict
+            except json.JSONDecodeError:
+                raise ValueError("Invalid JSON string for events")
+        return v  # Already a dict or None
 
     class Config:
         from_attributes = True
         orm_mode = True  # Enable ORM mode for compatibility with SQLAlchemy models
+
+class TaskListOut(BaseModel):
+    tasks: List[TaskOut]
+    total: int

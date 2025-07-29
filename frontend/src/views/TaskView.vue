@@ -1,4 +1,6 @@
-<script setup></script>
+<script setup>
+import Task from '@/components/Task.vue';
+</script>
 <template>
-    <h1 class="text-3xl">Task</h1>
+    <Task />
 </template>

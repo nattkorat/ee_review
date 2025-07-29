@@ -41,11 +41,26 @@ def delete_project(db: Session, project_id: int):
 def get_task(db: Session, task_id: str):
     return db.query(models.Task).filter(models.Task.id == task_id).first()
 
+def get_tasks_with_total(db: Session, project_id: int, skip: int = 0, limit: int = 100, status: bool | None = None):
+    query = db.query(models.Task).filter(models.Task.project_id == project_id)
+
+    if status is not None:
+        query = query.filter(models.Task.status == status)
+
+    total = query.count()
+    tasks = query.offset(skip).limit(limit).all()
+    return tasks, total
+
 def get_tasks(db: Session, project_id: int, skip: int = 0, limit: int = 100):
     return db.query(models.Task).filter(models.Task.project_id == project_id).offset(skip).limit(limit).all()
 
 def create_task(db: Session, task: schemas.CreateTask):
-    db_task = models.Task(**task.dict())
+    db_task = models.Task(
+        id=task.id,  # Ensure id is set if provided
+        project_id=task.project_id,
+        article=task.article,  # Use 'article' for task content
+        events=json.dumps(task.events),  # Convert events to JSON string
+    )
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
@@ -95,7 +110,7 @@ def create_task_from_file(db: Session, project_id: int, file: bytes):
             project_id=project_id,
             id=task_data.get('id', None),  # Ensure id is set if provided
             article=task_data.get('text', None),  # Use 'text' for article content
-            events=str(task_data.get('events', '')),  # Optional field
+            events=json.dumps(task_data['events']),  # Optional field
             status=task_data.get('status', False)  # Default to False if not provided
         )
         db.add(db_task)
@@ -106,7 +121,7 @@ def create_task_from_file(db: Session, project_id: int, file: bytes):
     return {
         "filename": file.name if hasattr(file, 'name') else "unknown",
         "content_type": "application/json",
-        "size": len(file_content)
+        "size": len(tasks)
     }
 
 # review CRUD operations

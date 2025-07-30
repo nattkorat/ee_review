@@ -6,14 +6,15 @@ backend/build_frontend.py
 backend/cli.py
 backend/database.py
 backend/main.py
+backend/auth/__init__.py
 backend/auth/crud.py
 backend/auth/models.py
 backend/auth/routes.py
 backend/auth/schemas.py
 backend/static/favicon.ico
 backend/static/index.html
-backend/static/assets/index-37k40jXc.css
-backend/static/assets/index-w6Uhv8ms.js
+backend/static/assets/index-9TRCjeHC.css
+backend/static/assets/index-Pp-_bxF0.js
 ee_review.egg-info/PKG-INFO
 ee_review.egg-info/SOURCES.txt
 ee_review.egg-info/dependency_links.txt

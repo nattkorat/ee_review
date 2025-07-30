@@ -23,7 +23,6 @@ const fetchTask = async () => {
   try {
     const res = await axios.get(`/api/v1/projects/${projectId}/tasks/${taskId}`);
     article.value = res.data.article;
-    console.log('Task loaded:', res.data.events);
     events.value = res.data.events ?? [];
   } catch (err) {
     console.error('Failed to load task:', err);
@@ -51,10 +50,15 @@ const removeArgument = (event, index) => {
 const submitReview = async () => {
   try {
     const payload = {
-      reviewed_events: events.value,
+      events: JSON.stringify(events.value),
+      comment: comment.value,
     };
+    console.log('Submitting review with payload:', payload);
     await axios.post(`/api/v1/projects/${projectId}/tasks/${taskId}/review`, payload);
     alert('Review submitted successfully!');
+    // Back to task list or project page
+    window.location.href = `/projects/${projectId}`;
+
   } catch (err) {
     console.error('Failed to submit review:', err);
     alert('Error submitting review.');
@@ -93,11 +97,11 @@ onMounted(fetchTask);
             <input v-model="event.event_type" class="w-full p-2 border rounded mt-1 mb-2" />
 
             <label class="block text-sm font-medium">Arguments</label>
-            <div v-for="(arg, argIdx) in event.arguments" :key="argIdx" class="ml-4 grid grid-cols-2 gap-2">
-              <input v-model="arg.text" class="p-2 border rounded" placeholder="Argument text" />
+            <div v-for="(arg, argIdx) in event.arguments" :key="argIdx" class="ml-4 grid grid-cols-3 gap-1">
+                <input v-model="arg.text" class="p-2 border rounded" placeholder="Argument text" />
               <input v-model="arg.role" class="p-2 border rounded" placeholder="Argument role" />
-              <button @click="removeArgument(event, argIdx)" class="text-red-500 col-span-2 text-sm hover:underline text-right">
-                ✖ Remove Argument
+              <button @click="removeArgument(event, argIdx)" class="text-red-500 text-sm hover:underline text-right">
+                ✖ Remove
               </button>
             </div>
             <button @click="addArgument(event)"

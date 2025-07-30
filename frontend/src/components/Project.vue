@@ -16,7 +16,7 @@ const fileInput = ref(null);
 // Filter and pagination state
 const filterStatus = ref('all'); // 'all' | 'completed' | 'not_completed'
 const currentPage = ref(1);
-const pageSize = 20; // You can customize this
+const pageSize = 10; // You can customize this
 const totalPages = ref(1);
 
 // Fetch project
@@ -37,28 +37,37 @@ const fetchProject = async () => {
 // Fetch tasks with filters & pagination
 const fetchTasks = async () => {
   try {
+    const skip = (currentPage.value - 1) * pageSize;
+
+    const status =
+      filterStatus.value === 'completed'
+        ? true
+        : filterStatus.value === 'not_completed'
+        ? false
+        : undefined;
+
     const params = {
-      page: currentPage.value,
-      size: pageSize,
+      skip,
+      limit: pageSize,
+      ...(status !== undefined && { status }), // Only include if defined
     };
 
-    if (filterStatus.value === 'completed') params.status = true;
-    else if (filterStatus.value === 'not_completed') params.status = false;
-    else params.status = undefined; // No filter
+    console.log('Fetching with params:', params);
 
     const response = await axios.get(`/api/v1/projects/${projectId.value}/tasks`, {
-      headers: { 'Authorization': `Bearer ${token.value}` },
+      headers: { Authorization: `Bearer ${token.value}` },
       params,
     });
 
     if (response.status === 200) {
       tasks.value = response.data.tasks;
-      totalPages.value = Math.ceil(response.data.total / pageSize); // You should return total count from backend
+      totalPages.value = Math.ceil(response.data.total / pageSize);
     }
   } catch (error) {
     console.error('Error fetching tasks:', error);
   }
 };
+
 
 const triggerFileSelection = () => fileInput.value.click();
 
@@ -96,7 +105,11 @@ onMounted(() => {
 });
 
 // Watchers to update when filters/pagination change
-watch([filterStatus, currentPage], fetchTasks);
+watch(filterStatus, () => {
+  currentPage.value = 1;
+  fetchTasks();
+});
+watch(currentPage, fetchTasks);
 </script>
 
 
@@ -140,10 +153,10 @@ watch([filterStatus, currentPage], fetchTasks);
           <it>{{ task.article }}</it>
         </router-link>
         <span
-          :class="task.completed ? 'text-green-500' : 'text-red-500'"
+          :class="task.status ? 'text-green-500' : 'text-red-500'"
           class="ml-4"
         >
-          {{ task.completed ? 'Completed' : 'Not Completed' }}
+          {{ task.status ? 'Completed' : 'Not Completed' }}
         </span>
       </li>
     </ul>

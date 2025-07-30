@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from backend.proj import models, schemas
 import csv
 import json
+import os
 from io import StringIO
 
 
@@ -131,11 +132,23 @@ def get_review(db: Session, review_id: int):
 def get_reviews(db: Session, task_id: str, skip: int = 0, limit: int = 100):
     return db.query(models.Review).filter(models.Review.task_id == task_id).offset(skip).limit(limit).all()
 
-def create_review(db: Session, review: schemas.CreateReview):
-    db_review = models.Review(**review.dict())
+def create_review(db: Session, review: schemas.CreateReview, task_id: str, reviewer_id: int):
+    db_review = models.Review(
+        task_id=task_id,
+        reviewer_id=reviewer_id,
+        events=review.events,
+        comment=review.comment,  # Optional field for reviewer comments
+    )
     db.add(db_review)
     db.commit()
     db.refresh(db_review)
+    
+    # update task status to completed
+    db_task = db.query(models.Task).filter(models.Task.id == task_id).first()
+    if db_task:
+        db_task.status = True  # Mark task as completed
+        db.commit()
+        db.refresh(db_task)
     return db_review
 
 def update_review(db: Session, review_id: int, review: schemas.CreateReview):
@@ -155,3 +168,30 @@ def delete_review(db: Session, review_id: int):
         db.commit()
         return db_review
     return None
+
+def export_tasks_to_jsonl(db: Session, project_id: int) -> str:
+    # Only get tasks that are completed
+    tasks = db.query(models.Task).filter(models.Task.project_id == project_id, models.Task.status == True).all()
+    
+    file_path = f"./exports/project_{project_id}_reviews.jsonl"
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+    with open(file_path, 'w', encoding='utf-8') as f:
+        for task in tasks:
+            # Get the most recent review for this task
+            review = (
+                db.query(models.Review)
+                .filter(models.Review.task_id == task.id)
+                .order_by(models.Review.created_at.desc())
+                .first()
+            )
+
+            row = {
+                "id": task.id,
+                "article": task.article,
+                "events": json.loads(review.events) if review else None,
+                "comment": review.comment if review else None,
+            }
+            f.write(json.dumps(row, ensure_ascii=False) + '\n')
+
+    return file_path

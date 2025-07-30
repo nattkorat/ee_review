@@ -32,5 +32,6 @@ class Review(Base):
     task_id = Column(String, nullable=False)
     reviewer_id = Column(Integer, nullable=False)
     events = Column(String, nullable=True)  # JSON string to store events
+    comment = Column(String, nullable=True)  # Optional field for reviewer comments
     created_at = Column(DateTime, default=datetime.utcnow)
     modified_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

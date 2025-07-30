@@ -21,15 +21,15 @@ class CreateTask(BaseModel):
     events: str | None = None # JSON string to store events
 
 class CreateReview(BaseModel):
-    task_id: str
-    reviewer_id: int
     events: str | None = None  # JSON string to store events
+    comment: str | None = None  # Optional field for reviewer comments
     
 class ReviewOut(BaseModel):
     id: int
     task_id: str
     reviewer_id: int
     events: str | None = None  # JSON string to store events
+    comment: str | None = None  # Optional field for reviewer comments
 
     class Config:
         from_attributes = True
@@ -76,3 +76,11 @@ class TaskOut(BaseModel):
 class TaskListOut(BaseModel):
     tasks: List[TaskOut]
     total: int
+    
+class DonwloadFileResponse(BaseModel):
+    filename: str
+    content_type: str
+
+    class Config:
+        from_attributes = True
+        arbitrary_types_allowed = True  # Allow bytes as a type

@@ -18,7 +18,7 @@ backend/proj/routes.py
 backend/proj/schemas.py
 backend/static/favicon.ico
 backend/static/index.html
-backend/static/assets/index-BnYXOcnd.js
+backend/static/assets/index-BlunKDSA.js
 backend/static/assets/index-jjc-DA_F.css
 ee_review.egg-info/PKG-INFO
 ee_review.egg-info/SOURCES.txt

@@ -1,9 +1,10 @@
 <script setup>
 import { ref, onMounted, watchEffect } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import axios from '@/utils/axios';
 
 const route = useRoute();
+const router = useRouter();
 const taskId = route.params.taskId;
 const projectId = route.params.projectId;
 
@@ -124,7 +125,7 @@ const submitReview = async () => {
     console.log('Submitting review:', payload);
     await axios.post(`/api/v1/projects/${projectId}/tasks/${taskId}/review`, payload);
     alert('Review submitted successfully!');
-    window.location.href = `/api/v1/projects/${projectId}`;
+    router.push(`/projects/${projectId}`);
   } catch (err) {
     console.error('Failed to submit review:', err);
     alert('Error submitting review.');

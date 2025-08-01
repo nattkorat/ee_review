@@ -21,6 +21,16 @@ const register = async () => {
       if (loginResponse.status === 200 && loginResponse.data.access_token) {
         // Store the token in local storage or Vuex store
         localStorage.setItem('authToken', loginResponse.data.access_token)
+        
+        // set userinfo
+        const userResponse = await axios.get('/api/v1/auth/me', {
+          headers: { 'Authorization': `Bearer ${loginResponse.data.access_token}` }
+        })
+        if (userResponse.status === 200) {
+          localStorage.setItem('user', JSON.stringify(userResponse.data))
+        } else {
+          console.error('Failed to fetch user data:', userResponse.status)
+        }
       } else {
         alert('Login after registration failed: ' + loginResponse.status)
       }
@@ -38,7 +48,7 @@ const register = async () => {
 </script>
 
 <template>
-  <div>
+  <div class="w-50">
     <h1 class="text-2xl font-semibold mb-4">Register</h1>
     <input v-model="username" placeholder="Username" class="input mb-2 w-full p-2 border rounded" />
     <input

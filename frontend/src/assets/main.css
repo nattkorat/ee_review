@@ -32,5 +32,6 @@ a,
   #app {
     display: grid;
     padding: 1rem;
+    width: 100%;
   }
 } 

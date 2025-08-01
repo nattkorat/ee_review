@@ -20,7 +20,6 @@ class Task(Base):
     project_id = Column(Integer, nullable=False)
     article = Column(String, nullable=False)
     events = Column(String, nullable=True) # JSON string to store events
-    status = Column(Boolean, default=False) # True for completed, False for pending
     created_at = Column(DateTime, default=datetime.utcnow)
     modified_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
  

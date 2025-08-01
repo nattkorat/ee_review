@@ -25,4 +25,4 @@ packages = ["backend"]
 include-package-data = true
 
 [tool.setuptools.package-data]
-backend = ["static/**/*", "auth/*"]
+backend = ["static/**/*", "auth/*", "proj/*"]

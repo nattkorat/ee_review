@@ -18,6 +18,16 @@ const login = async () => {
       // Store the token in local storage or Vuex store
       localStorage.setItem('authToken', response.data.access_token)
 
+      // get user info
+      const userResponse = await axios.get('/api/v1/auth/me', {
+        headers: { 'Authorization': `Bearer ${response.data.access_token}` }
+      })
+      if (userResponse.status === 200) {
+        localStorage.setItem('user', JSON.stringify(userResponse.data))
+      } else {
+        console.error('Failed to fetch user data:', userResponse.status)
+      }
+
       emit('login-success')
     } else {
       console.log('Login failed:', response)
@@ -25,13 +35,14 @@ const login = async () => {
     }
   } catch (error) {
     console.error('Login error:', error)
-    alert('An error occurred during login.')
+    alert('Username or password is incorrect.')
+    password.value = '' // Clear password field on error
   }
 }
 </script>
 
 <template>
-  <div>
+  <div class="w-50">
     <h1 class="text-2xl font-semibold mb-4">Login</h1>
     <input
       v-model="username"

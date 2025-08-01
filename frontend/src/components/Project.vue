@@ -8,6 +8,7 @@ const route = useRoute();
 const projectId = ref(route.params.id);
 
 const token = ref(localStorage.getItem('authToken') || '');
+const user = ref(JSON.parse(localStorage.getItem('user') || '{}'));
 const projectName = ref('');
 const tasks = ref([]);
 
@@ -51,8 +52,6 @@ const fetchTasks = async () => {
       limit: pageSize,
       ...(status !== undefined && { status }), // Only include if defined
     };
-
-    console.log('Fetching with params:', params);
 
     const response = await axios.get(`/api/v1/projects/${projectId.value}/tasks`, {
       headers: { Authorization: `Bearer ${token.value}` },
@@ -115,7 +114,9 @@ watch(currentPage, fetchTasks);
 
 <template>
   <h1 class="text-3xl mb-8" v-if="projectId">{{ projectName }}</h1>
-  <Upload v-if="projectId" @upload="triggerFileSelection" />
+  <div v-if="user && user.level === 0">
+    <Upload v-if="projectId" @upload="triggerFileSelection" />
+  </div>
   <input
     type="file"
     ref="fileInput"

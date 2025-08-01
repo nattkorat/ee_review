@@ -1,5 +1,8 @@
 from sqlalchemy.orm import Session
 from backend.proj import models, schemas
+from sqlalchemy.orm import aliased
+from sqlalchemy.sql import exists
+from sqlalchemy import func
 import csv
 import json
 import os
@@ -11,7 +14,7 @@ def get_project(db: Session, project_id: int):
     return db.query(models.Project).filter(models.Project.id == project_id).first()
 
 def get_projects(db: Session, owner_id: int, skip: int = 0, limit: int = 100):
-    return db.query(models.Project).filter(models.Project.owner_id == owner_id).offset(skip).limit(limit).all()
+    return db.query(models.Project).offset(skip).limit(limit).all()
 
 def create_project(db: Session, project: schemas.CreateProject, owner_id: int):
     db_project = models.Project(**project.dict(), owner_id=owner_id)
@@ -42,15 +45,51 @@ def delete_project(db: Session, project_id: int):
 def get_task(db: Session, task_id: str):
     return db.query(models.Task).filter(models.Task.id == task_id).first()
 
-def get_tasks_with_total(db: Session, project_id: int, skip: int = 0, limit: int = 100, status: bool | None = None):
-    query = db.query(models.Task).filter(models.Task.project_id == project_id)
+def get_tasks_with_total(
+    db: Session,
+    user_id: int,
+    project_id: int,
+    skip: int = 0,
+    limit: int = 100,
+    status: bool | None = None,
+):
+    from sqlalchemy.sql import exists
+
+    # Base query
+    base_query = db.query(models.Task).filter(models.Task.project_id == project_id)
+
+    # Subquery to check if review exists for task by this user
+    review_exists_subq = (
+        db.query(models.Review)
+        .filter(
+            models.Review.reviewer_id == user_id,
+            models.Review.task_id == models.Task.id,
+        )
+    )
 
     if status is not None:
-        query = query.filter(models.Task.status == status)
+        if status:  # Reviewed
+            base_query = base_query.filter(review_exists_subq.exists())
+        else:  # Not reviewed
+            base_query = base_query.filter(~review_exists_subq.exists())
 
-    total = query.count()
-    tasks = query.offset(skip).limit(limit).all()
+    total = base_query.count()
+    tasks = base_query.offset(skip).limit(limit).all()
+
+    # Add status field to each task
+    reviewed_task_ids = {
+        r.task_id
+        for r in db.query(models.Review.task_id)
+        .filter(models.Review.reviewer_id == user_id)
+        .all()
+    }
+
+    # Attach a transient `status` field (True if reviewed, False if not)
+    for task in tasks:
+        task.status = task.id in reviewed_task_ids
+
     return tasks, total
+
 
 def get_tasks(db: Session, project_id: int, skip: int = 0, limit: int = 100):
     return db.query(models.Task).filter(models.Task.project_id == project_id).offset(skip).limit(limit).all()
@@ -112,7 +151,6 @@ def create_task_from_file(db: Session, project_id: int, file: bytes):
             id=task_data.get('id', None),  # Ensure id is set if provided
             article=task_data.get('text', None),  # Use 'text' for article content
             events=json.dumps(task_data['events']),  # Optional field
-            status=task_data.get('status', False)  # Default to False if not provided
         )
         db.add(db_task)
         db.commit()
@@ -120,17 +158,22 @@ def create_task_from_file(db: Session, project_id: int, file: bytes):
         created_tasks.append(db_task)
 
     return {
-        "filename": file.name if hasattr(file, 'name') else "unknown",
         "content_type": "application/json",
         "size": len(tasks)
     }
 
 # review CRUD operations
 def get_review(db: Session, review_id: int):
-    return db.query(models.Review).filter(models.Review.id == review_id).first()
+    return db.query(models.Review).first()
+
+def get_review_by_owner(db: Session, owner_id: int, skip: int = 0, limit: int = 100):
+    return db.query(models.Review).filter(models.Review.reviewer_id == owner_id).first()
 
 def get_reviews(db: Session, task_id: str, skip: int = 0, limit: int = 100):
     return db.query(models.Review).filter(models.Review.task_id == task_id).offset(skip).limit(limit).all()
+
+def get_reviews_by_owner(db: Session, owner_id: int, skip: int = 0, limit: int = 100):
+    return db.query(models.Review).filter(models.Review.reviewer_id == owner_id).offset(skip).limit(limit).all()
 
 def create_review(db: Session, review: schemas.CreateReview, task_id: str, reviewer_id: int):
     db_review = models.Review(
@@ -169,28 +212,57 @@ def delete_review(db: Session, review_id: int):
         return db_review
     return None
 
+
 def export_tasks_to_jsonl(db: Session, project_id: int) -> str:
-    # Only get tasks that are completed
-    tasks = db.query(models.Task).filter(models.Task.project_id == project_id, models.Task.status == True).all()
-    
-    file_path = f"./exports/project_{project_id}_reviews.jsonl"
+    project_title = db.query(models.Project.name).filter(models.Project.id == project_id).scalar()
+    safe_title = project_title.replace(" ", "_").lower()
+    file_path = f"./exports/project_{safe_title}_reviews.jsonl"
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
+    tasks = db.query(models.Task).filter(models.Task.project_id == project_id).all()
+
+    # Subquery to get latest review per user per task
+    sub_latest = (
+        db.query(
+            models.Review.task_id,
+            models.Review.reviewer_id,
+            func.max(models.Review.created_at).label("latest_time")
+        )
+        .group_by(models.Review.task_id, models.Review.reviewer_id)
+        .subquery()
+    )
+
+    # Join to get full review info
+    LatestReview = aliased(models.Review)
+    latest_reviews = (
+        db.query(LatestReview)
+        .join(
+            sub_latest,
+            (LatestReview.task_id == sub_latest.c.task_id) &
+            (LatestReview.reviewer_id == sub_latest.c.reviewer_id) &
+            (LatestReview.created_at == sub_latest.c.latest_time)
+        )
+        .all()
+    )
+
+    # Group reviews by task_id
+    from collections import defaultdict
+    reviews_by_task = defaultdict(list)
+    for review in latest_reviews:
+        reviews_by_task[review.task_id].append({
+            "reviewer_id": review.reviewer_id,
+            "events": json.loads(review.events) if review.events else None,
+            "comment": review.comment,
+        })
+
+    # Write each task and its reviews
     with open(file_path, 'w', encoding='utf-8') as f:
         for task in tasks:
-            # Get the most recent review for this task
-            review = (
-                db.query(models.Review)
-                .filter(models.Review.task_id == task.id)
-                .order_by(models.Review.created_at.desc())
-                .first()
-            )
-
             row = {
                 "id": task.id,
                 "article": task.article,
-                "events": json.loads(review.events) if review else None,
-                "comment": review.comment if review else None,
+                "original_events": json.loads(task.events) if task.events else None,
+                "reviewed_events": reviews_by_task.get(task.id, [])
             }
             f.write(json.dumps(row, ensure_ascii=False) + '\n')
 

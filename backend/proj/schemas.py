@@ -44,20 +44,16 @@ class UploadFile(BaseModel):
         arbitrary_types_allowed = True  # Allow bytes as a type
 
 class UploadFileResponse(BaseModel):
-    filename: str
     content_type: str
     size: int  # Size of the uploaded file in bytes
 
-    class Config:
-        from_attributes = True
-        arbitrary_types_allowed = True  # Allow bytes as a type
 
 class TaskOut(BaseModel):
     id: str
     project_id: int
     article: str
     events: list | None = None  # JSON string to store events
-    status: bool = False  # True for completed, False for pending
+    status: bool | None = None
     
     @field_validator("events", mode="before")
     @classmethod

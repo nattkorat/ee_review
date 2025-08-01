@@ -87,7 +87,7 @@ def get_tasks(
     current_user: User = Depends(get_current_user)
 ):
     tasks, total = crud.get_tasks_with_total(
-        db, project_id=project_id, skip=skip, limit=limit, status=status
+        db, current_user.id, project_id=project_id, skip=skip, limit=limit, status=status
     )
     return {"tasks": tasks, "total": total}
 
@@ -117,7 +117,10 @@ def upload_task_file(
     if not task:
         raise HTTPException(status_code=400, detail="Failed to create task from file")
 
-    return schemas.UploadFileResponse()
+    return schemas.UploadFileResponse(
+        content_type=task.get("content_type", "application/json"),  # Default to 'application/json'
+        size=task.get('size', 0),  # Assuming `task` has a size attribute
+    )
 
 
 @router.post(

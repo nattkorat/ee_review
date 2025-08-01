@@ -40,10 +40,6 @@ onMounted(() => {
 
 <template>
   <div>
-    <h1 class="text-3xl mb-8">
-      Epidemic Event Extraction Evalalution
-    </h1>
-
     <div v-if="isAuthenticated">
         <ProjectList/>
         <Logout />

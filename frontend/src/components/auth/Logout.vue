@@ -2,6 +2,7 @@
 const logout = () => {
   // Clear the token from local storage
   localStorage.removeItem('authToken')
+  localStorage.removeItem('user')
   // Redirect the user to the login page or home page
   window.location.href = '/'
 }

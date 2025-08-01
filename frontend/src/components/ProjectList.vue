@@ -12,6 +12,7 @@ const selectedProject = ref(null);
 const showEditModal = ref(false);
 
 const token = ref(localStorage.getItem('authToken') || '')
+const user = ref(JSON.parse(localStorage.getItem('user') || '{}'))
 
 
 const openEditModal = (project) => {
@@ -122,9 +123,9 @@ const createProject = async () => {
     }
 }
 
-const downloadExport = async (projectId) => {
+const downloadExport = async (project) => {
   try {
-    const response = await axios.get(`/api/v1/projects/${projectId}/export`, {
+    const response = await axios.get(`/api/v1/projects/${project.id}/export`, {
       responseType: 'blob', // IMPORTANT
     });
 
@@ -133,7 +134,7 @@ const downloadExport = async (projectId) => {
 
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `project_${projectId}_reviews.jsonl`);
+    link.setAttribute('download', `${project.name}_reviews.jsonl`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -145,15 +146,17 @@ const downloadExport = async (projectId) => {
 </script>
 
 <template>
-    <div>
-      <CreateProject @create="isCreate = true" />
+    <div class="w-full">
+      <div v-if="user && user.level == 0">
+        <CreateProject @create="isCreate = true" />
+      </div>
       <!-- hidden form for creating a new project -->
       <div
         v-if="isCreate"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 bg-opacity-40"
         >
         <!-- Modal Box -->
-        <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
+        <div class="bg-white p-6 rounded-xl shadow-xl w-150">
             <h3 class="text-xl font-semibold mb-4 text-center">Create New Project</h3>
 
             <div class="flex flex-col gap-4">
@@ -195,19 +198,19 @@ const downloadExport = async (projectId) => {
 
       <div v-if="projects.length === 0" class="text-gray-500 mt-4">No projects available.</div>
   
-      <div v-else class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+      <div v-else class="w-full grid md:grid-cols-1 sm:grid-cols-1 lg:grid-cols-3  gap-4 mt-4">
     <div
       v-for="project in projects"
       :key="project.id"
       class="relative block p-4 bg-white shadow hover:shadow-md transition rounded-xl border border-gray-200"
     >
       <!-- Three Dots Menu -->
-      <div class="absolute top-2 right-2">
+      <div class="absolute top-2 right-2" v-if="user && user.level === 0">
         <div class="relative group">
           <button class="text-gray-500 hover:text-gray-700 text-xl">⋯</button>
           <div class="absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10">
             <button
-              @click="downloadExport(project.id)"
+              @click="downloadExport(project)"
               class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
               Export
@@ -238,7 +241,7 @@ const downloadExport = async (projectId) => {
 
   <!-- Edit Modal -->
   <div v-if="showEditModal" class="fixed inset-0 flex items-center justify-center bg-black/50 bg-opacity-40 z-50">
-    <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
+    <div class="bg-white p-6 rounded-xl shadow-xl w-full">
       <h2 class="text-lg font-bold mb-4">Edit Project</h2>
       <label class="block text-sm font-medium">Name</label>
       <input

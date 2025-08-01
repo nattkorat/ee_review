@@ -14,7 +14,8 @@ dependencies = [
     "sqlalchemy",
     "pydantic",
     "passlib[bcrypt]",
-    "python-jose[cryptography]"
+    "python-jose[cryptography]",
+    "python-multipart"
 ]
 
 [project.scripts]

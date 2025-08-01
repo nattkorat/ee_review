@@ -10,6 +10,7 @@ Requires-Dist: sqlalchemy
 Requires-Dist: pydantic
 Requires-Dist: passlib[bcrypt]
 Requires-Dist: python-jose[cryptography]
+Requires-Dist: python-multipart
 
 # Epidemic Event Extraction Evaluation Guidelines
 

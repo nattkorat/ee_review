@@ -124,7 +124,7 @@ const submitReview = async () => {
     console.log('Submitting review:', payload);
     await axios.post(`/api/v1/projects/${projectId}/tasks/${taskId}/review`, payload);
     alert('Review submitted successfully!');
-    window.location.href = `/projects/${projectId}`;
+    window.location.href = `/api/v1/projects/${projectId}`;
   } catch (err) {
     console.error('Failed to submit review:', err);
     alert('Error submitting review.');

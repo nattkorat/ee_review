@@ -9,6 +9,8 @@ description = "Full-stack web app with FastAPI and Vue"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "dotenv",
+    "psycopg2-binary",
     "fastapi",
     "uvicorn",
     "sqlalchemy",

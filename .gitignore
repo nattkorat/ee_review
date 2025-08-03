@@ -3,6 +3,7 @@
 *.pyc
 *.pyo
 *.pyd
+.env
 
 # directories
 __pycache__/

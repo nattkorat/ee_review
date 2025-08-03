@@ -1,8 +1,28 @@
-version: '3'
+version: '3.8'
+
 services:
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: ee_user
+      POSTGRES_PASSWORD: ee_pass
+      POSTGRES_DB: ee_review
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   ee_review:
     build: .
     ports:
       - "8000:8000"
     volumes:
       - .:/app
+    environment:
+      DATABASE_URL: postgresql+psycopg2://ee_user:ee_pass@postgres:5432/ee_review
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:

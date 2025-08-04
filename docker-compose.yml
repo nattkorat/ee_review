@@ -20,9 +20,17 @@ services:
     volumes:
       - .:/app
     environment:
-      DATABASE_URL: postgresql+psycopg2://ee_user:ee_pass@postgres:5432/ee_review
+      DATABASE_URL: ${DATABASE_URL}
     depends_on:
       - postgres
+  
+  ngrok:
+    image: ngrok/ngrok
+    command: http --domain=live-kiwi-gratefully.ngrok-free.app ee_review:8000
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    depends_on:
+      - ee_review
 
 volumes:
   postgres_data:

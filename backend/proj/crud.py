@@ -3,6 +3,7 @@ from backend.proj import models, schemas
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql import exists
 from sqlalchemy import func
+from collections import defaultdict
 import csv
 import json
 import os
@@ -246,7 +247,6 @@ def export_tasks_to_jsonl(db: Session, project_id: int) -> str:
     )
 
     # Group reviews by task_id
-    from collections import defaultdict
     reviews_by_task = defaultdict(list)
     for review in latest_reviews:
         reviews_by_task[review.task_id].append({
@@ -264,6 +264,7 @@ def export_tasks_to_jsonl(db: Session, project_id: int) -> str:
                 "original_events": json.loads(task.events) if task.events else None,
                 "reviewed_events": reviews_by_task.get(task.id, [])
             }
-            f.write(json.dumps(row, ensure_ascii=False) + '\n')
+            if row["reviewed_events"]:
+                f.write(json.dumps(row, ensure_ascii=False) + '\n')
 
     return file_path
